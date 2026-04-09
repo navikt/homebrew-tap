@@ -1,0 +1,89 @@
+name: Update cplt formula
+
+on:
+  schedule:
+    # Check for new releases every hour
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Fetch latest cplt release
+        id: release
+        run: |
+          RELEASE=$(curl -fsSL https://api.github.com/repos/navikt/cplt/releases/latest)
+          VERSION=$(echo "$RELEASE" | jq -r '.tag_name')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Latest cplt release: $VERSION"
+
+      - name: Check if formula is already up to date
+        id: check
+        run: |
+          CURRENT=$(grep '^  version ' Formula/cplt.rb | sed 's/.*"\(.*\)"/\1/')
+          echo "Current: $CURRENT  Latest: ${{ steps.release.outputs.version }}"
+          if [ "$CURRENT" = "${{ steps.release.outputs.version }}" ]; then
+            echo "up_to_date=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "up_to_date=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download tarballs and compute SHA256
+        if: steps.check.outputs.up_to_date == 'false'
+        id: sums
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          BASE="https://github.com/navikt/cplt/releases/download/${VERSION}"
+          curl -fsSL "$BASE/cplt-aarch64-apple-darwin.tar.gz" -o mac_arm.tar.gz
+          curl -fsSL "$BASE/cplt-x86_64-apple-darwin.tar.gz" -o mac_x86.tar.gz
+          echo "mac_arm=$(sha256sum mac_arm.tar.gz | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "mac_x86=$(sha256sum mac_x86.tar.gz | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+
+      - name: Write updated formula
+        if: steps.check.outputs.up_to_date == 'false'
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+          MAC_ARM_SHA: ${{ steps.sums.outputs.mac_arm }}
+          MAC_X86_SHA: ${{ steps.sums.outputs.mac_x86 }}
+        run: |
+          cat > Formula/cplt.rb << FORMULA
+          class Cplt < Formula
+            desc "macOS Seatbelt sandbox wrapper for GitHub Copilot CLI"
+            homepage "https://github.com/navikt/cplt"
+            version "${VERSION}"
+            license "MIT"
+
+            on_macos do
+              if Hardware::CPU.arm?
+                url "https://github.com/navikt/cplt/releases/download/${VERSION}/cplt-aarch64-apple-darwin.tar.gz"
+                sha256 "${MAC_ARM_SHA}"
+              else
+                url "https://github.com/navikt/cplt/releases/download/${VERSION}/cplt-x86_64-apple-darwin.tar.gz"
+                sha256 "${MAC_X86_SHA}"
+              end
+            end
+
+            def install
+              bin.install "cplt"
+            end
+
+            test do
+              assert_match "cplt", shell_output("#{bin}/cplt --version")
+            end
+          end
+          FORMULA
+
+      - name: Commit and push
+        if: steps.check.outputs.up_to_date == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/cplt.rb
+          git commit -m "chore: update cplt to ${{ steps.release.outputs.version }}"
+          git push
