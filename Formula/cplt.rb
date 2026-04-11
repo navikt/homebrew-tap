@@ -1,31 +1,21 @@
 class Cplt < Formula
   desc "macOS Seatbelt sandbox wrapper for GitHub Copilot CLI"
   homepage "https://github.com/navikt/cplt"
-  version "2026.04.11-48aedfc"
+  version "2026.04.11-7a46440"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/navikt/cplt/releases/download/2026.04.11-48aedfc/cplt-aarch64-apple-darwin.tar.gz"
-      sha256 "0296bd412e8d8846efe8038329d3e2f920305567a7e9133621b2df64e6ae1c0f"
+      url "https://github.com/navikt/cplt/releases/download/2026.04.11-7a46440/cplt-aarch64-apple-darwin.tar.gz"
+      sha256 "c848a8649d3630310e4cdaa4b4c5abfcd7c5ae5b4028f361e2b9d384f11dcf9e"
     else
-      url "https://github.com/navikt/cplt/releases/download/2026.04.11-48aedfc/cplt-x86_64-apple-darwin.tar.gz"
-      sha256 "cac331866d73135f518c8f5359c826b827bae41e0db342955ddc296e19454827"
+      url "https://github.com/navikt/cplt/releases/download/2026.04.11-7a46440/cplt-x86_64-apple-darwin.tar.gz"
+      sha256 "80b58c74dd409b78411eac281efba137b190bb862cd3468e403ebbd944bb1f85"
     end
   end
 
   def install
     bin.install "cplt"
-  end
-
-  def caveats
-    <<~EOS
-      The real Copilot CLI must also be installed:
-        brew install --cask copilot-cli
-
-      To route 'copilot' through the sandbox, add to your shell rc:
-        eval "$(cplt --shell-setup)"
-    EOS
   end
 
   test do
