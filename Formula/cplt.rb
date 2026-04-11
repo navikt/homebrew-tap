@@ -18,6 +18,16 @@ class Cplt < Formula
     bin.install "cplt"
   end
 
+  def caveats
+    <<~EOS
+      The real Copilot CLI must also be installed:
+        brew install --cask copilot-cli
+
+      To route 'copilot' through the sandbox, add to your shell rc:
+        eval "$(cplt --shell-setup)"
+    EOS
+  end
+
   test do
     assert_match "cplt", shell_output("#{bin}/cplt --version")
   end
