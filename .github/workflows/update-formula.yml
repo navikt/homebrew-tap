@@ -20,9 +20,17 @@ jobs:
 
       - name: Fetch latest cplt release
         id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          RELEASE=$(curl -fsSL https://api.github.com/repos/navikt/cplt/releases/latest)
-          VERSION=$(echo "$RELEASE" | jq -r '.tag_name')
+          VERSION=$(gh release list --repo navikt/cplt --json tagName --limit 1 \
+            --jq '.[0].tagName')
+
+          if [ -z "$VERSION" ]; then
+            echo "No cplt release found"
+            exit 0
+          fi
+
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Latest cplt release: $VERSION"
 
