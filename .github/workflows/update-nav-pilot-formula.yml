@@ -1,0 +1,122 @@
+name: Update nav-pilot formula
+
+on:
+  schedule:
+    - cron: "30 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: formula-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Fetch latest nav-pilot release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RELEASE=$(curl -fsSL \
+            -H "Authorization: token ${GH_TOKEN}" \
+            "https://api.github.com/repos/navikt/copilot/releases" \
+            | jq -r '[.[] | select(.tag_name | startswith("nav-pilot/")) | select(.draft == false and .prerelease == false)][0]')
+
+          TAG=$(echo "$RELEASE" | jq -r '.tag_name')
+          if [ "$TAG" = "null" ] || [ -z "$TAG" ]; then
+            echo "No nav-pilot release found"
+            exit 0
+          fi
+
+          VERSION="${TAG#nav-pilot/}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Latest nav-pilot release: $VERSION"
+
+      - name: Check if formula is already up to date
+        if: steps.release.outputs.version != ''
+        id: check
+        run: |
+          CURRENT=$(grep '^  version ' Formula/nav-pilot.rb | sed 's/.*"\(.*\)"/\1/')
+          echo "Current: $CURRENT  Latest: ${{ steps.release.outputs.version }}"
+          if [ "$CURRENT" = "${{ steps.release.outputs.version }}" ]; then
+            echo "up_to_date=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "up_to_date=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download checksums
+        if: steps.check.outputs.up_to_date == 'false'
+        id: sums
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          BASE="https://github.com/navikt/copilot/releases/download/${TAG}"
+          curl -fsSL "$BASE/SHA256SUMS" -o SHA256SUMS
+          cat SHA256SUMS
+
+          echo "darwin_arm64=$(grep 'nav-pilot-darwin-arm64' SHA256SUMS | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "darwin_amd64=$(grep 'nav-pilot-darwin-amd64' SHA256SUMS | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "linux_arm64=$(grep 'nav-pilot-linux-arm64' SHA256SUMS | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "linux_amd64=$(grep 'nav-pilot-linux-amd64' SHA256SUMS | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+
+      - name: Write updated formula
+        if: steps.check.outputs.up_to_date == 'false'
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+          TAG: ${{ steps.release.outputs.tag }}
+          DARWIN_ARM64_SHA: ${{ steps.sums.outputs.darwin_arm64 }}
+          DARWIN_AMD64_SHA: ${{ steps.sums.outputs.darwin_amd64 }}
+          LINUX_ARM64_SHA: ${{ steps.sums.outputs.linux_arm64 }}
+          LINUX_AMD64_SHA: ${{ steps.sums.outputs.linux_amd64 }}
+        run: |
+          cat > Formula/nav-pilot.rb << FORMULA
+          class NavPilot < Formula
+            desc "Nav's institutional AI developer toolkit for GitHub Copilot"
+            homepage "https://github.com/navikt/copilot"
+            version "${VERSION}"
+            license "MIT"
+
+            on_macos do
+              if Hardware::CPU.arm?
+                url "https://github.com/navikt/copilot/releases/download/${TAG}/nav-pilot-darwin-arm64"
+                sha256 "${DARWIN_ARM64_SHA}"
+              else
+                url "https://github.com/navikt/copilot/releases/download/${TAG}/nav-pilot-darwin-amd64"
+                sha256 "${DARWIN_AMD64_SHA}"
+              end
+            end
+
+            on_linux do
+              if Hardware::CPU.arm?
+                url "https://github.com/navikt/copilot/releases/download/${TAG}/nav-pilot-linux-arm64"
+                sha256 "${LINUX_ARM64_SHA}"
+              else
+                url "https://github.com/navikt/copilot/releases/download/${TAG}/nav-pilot-linux-amd64"
+                sha256 "${LINUX_AMD64_SHA}"
+              end
+            end
+
+            def install
+              bin.install Dir["nav-pilot*"].first => "nav-pilot"
+            end
+
+            test do
+              assert_match "nav-pilot", shell_output("#{bin}/nav-pilot version")
+            end
+          end
+          FORMULA
+
+      - name: Commit and push
+        if: steps.check.outputs.up_to_date == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/nav-pilot.rb
+          git commit -m "chore: update nav-pilot to ${{ steps.release.outputs.version }}"
+          git push
