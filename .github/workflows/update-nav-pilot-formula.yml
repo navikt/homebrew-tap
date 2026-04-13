@@ -22,13 +22,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          RELEASE=$(curl -fsSL \
-            -H "Authorization: token ${GH_TOKEN}" \
-            "https://api.github.com/repos/navikt/copilot/releases" \
-            | jq -r '[.[] | select(.tag_name | startswith("nav-pilot/")) | select(.draft == false and .prerelease == false)][0]')
+          TAG=$(gh release list --repo navikt/copilot --json tagName --limit 100 \
+            --jq '[.[] | select(.tagName | startswith("nav-pilot/"))][0].tagName')
 
-          TAG=$(echo "$RELEASE" | jq -r '.tag_name')
-          if [ "$TAG" = "null" ] || [ -z "$TAG" ]; then
+          if [ -z "$TAG" ]; then
             echo "No nav-pilot release found"
             exit 0
           fi
