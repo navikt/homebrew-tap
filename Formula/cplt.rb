@@ -1,16 +1,16 @@
 class Cplt < Formula
   desc "macOS Seatbelt sandbox wrapper for GitHub Copilot CLI"
   homepage "https://github.com/navikt/cplt"
-  version "2026.05.11-091955-18c988a"
+  version "2026.05.11-112754-dc8f165"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/navikt/cplt/releases/download/2026.05.11-091955-18c988a/cplt-aarch64-apple-darwin.tar.gz"
-      sha256 "4f4b95192c8ddea0cb327a8e08a3d3d6130ffd72477981c868d5453c47a88451"
+      url "https://github.com/navikt/cplt/releases/download/2026.05.11-112754-dc8f165/cplt-aarch64-apple-darwin.tar.gz"
+      sha256 "c509f5547d9b8811de2b35bf2c5c65c98b7dda083b087af20c4663e7b7183f27"
     else
-      url "https://github.com/navikt/cplt/releases/download/2026.05.11-091955-18c988a/cplt-x86_64-apple-darwin.tar.gz"
-      sha256 "bf85f3f4aaf5b75721b5aedf3659a54edfb2c34888d7f20874bb4c6060ed7ff3"
+      url "https://github.com/navikt/cplt/releases/download/2026.05.11-112754-dc8f165/cplt-x86_64-apple-darwin.tar.gz"
+      sha256 "cf7d101e85931fe6117235b75b25f5895e7d551f1e3ae58a822faff6ab132e92"
     end
   end
 
