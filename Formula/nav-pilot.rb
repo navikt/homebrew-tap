@@ -1,28 +1,26 @@
 class NavPilot < Formula
   desc "Nav's institutional AI developer toolkit for GitHub Copilot"
   homepage "https://github.com/navikt/copilot"
-  version "2026.06.23-062530-3353496"
+  version "2026.06.23-095021-9ea073a"
   license "MIT"
 
-  depends_on "navikt/tap/cplt"
-  depends_on "rtk"
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/navikt/copilot/releases/download/nav-pilot/2026.06.23-062530-3353496/nav-pilot-darwin-arm64"
-      sha256 "c5bdd88dc9bd24bf55e4fda36617fe068051f77088e3c4e617bf2f0ae392e1dd"
+      url "https://github.com/navikt/copilot/releases/download/nav-pilot/2026.06.23-095021-9ea073a/nav-pilot-darwin-arm64"
+      sha256 "55ad2db56110112c0c74a417454c650ff6f576bf09bfd5665f5286bf913f0efd"
     else
-      url "https://github.com/navikt/copilot/releases/download/nav-pilot/2026.06.23-062530-3353496/nav-pilot-darwin-amd64"
-      sha256 "342c17b37a30473633ff80d1e37f30de609de434ef55939017a8e476494040db"
+      url "https://github.com/navikt/copilot/releases/download/nav-pilot/2026.06.23-095021-9ea073a/nav-pilot-darwin-amd64"
+      sha256 "126faa9fcac708516aaaf22bca46c85ba6d627671ce6e0d12a5a6b60dc43f163"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/navikt/copilot/releases/download/nav-pilot/2026.06.23-062530-3353496/nav-pilot-linux-arm64"
-      sha256 "94e96d11bdaaaf265aba1b6361ca208f68cd80bbdbff2ded61baf02d6f5ac8fd"
+      url "https://github.com/navikt/copilot/releases/download/nav-pilot/2026.06.23-095021-9ea073a/nav-pilot-linux-arm64"
+      sha256 "70000d27096a83ddc63b32fc64cd84b6e23c11c30a7a80de59d718e213dafb2d"
     else
-      url "https://github.com/navikt/copilot/releases/download/nav-pilot/2026.06.23-062530-3353496/nav-pilot-linux-amd64"
-      sha256 "31b12f820445fe3919c68bab399069f7ec05646bbad0b449facb33f872bfa86b"
+      url "https://github.com/navikt/copilot/releases/download/nav-pilot/2026.06.23-095021-9ea073a/nav-pilot-linux-amd64"
+      sha256 "4281639a314bf0bc03368ad7caafab25b47422cb1e2831d4d92b4c6e5da77ff1"
     end
   end
 
