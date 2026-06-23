@@ -4,6 +4,8 @@ class NavPilot < Formula
   version "2026.06.23-062530-3353496"
   license "MIT"
 
+  depends_on "navikt/tap/cplt"
+  depends_on "rtk"
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/navikt/copilot/releases/download/nav-pilot/2026.06.23-062530-3353496/nav-pilot-darwin-arm64"
