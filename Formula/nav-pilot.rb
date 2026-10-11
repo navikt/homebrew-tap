@@ -1,26 +1,26 @@
 class NavPilot < Formula
   desc "Nav's institutional AI developer toolkit for GitHub Copilot"
   homepage "https://github.com/navikt/copilot"
-  version "2026.10.11-135202-e0192d2"
+  version "2026.10.11-201029-b998fab"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/navikt/copilot/releases/download/nav-pilot/2026.10.11-135202-e0192d2/nav-pilot-darwin-arm64"
-      sha256 "f510f19df07178310e5ec676e6b5ef8021209ad5597c15a3e92cb1c1cde69f62"
+      url "https://github.com/navikt/copilot/releases/download/nav-pilot/2026.10.11-201029-b998fab/nav-pilot-darwin-arm64"
+      sha256 "ac78db075273b8899a7e9fe1b0c7401bd1dd165ff9f33705eeff2dadf86fd7b4"
     else
-      url "https://github.com/navikt/copilot/releases/download/nav-pilot/2026.10.11-135202-e0192d2/nav-pilot-darwin-amd64"
-      sha256 "3fced1478d22fbb28474e2a281d1f54cf63765f611a18df7f08a3f3f7915b811"
+      url "https://github.com/navikt/copilot/releases/download/nav-pilot/2026.10.11-201029-b998fab/nav-pilot-darwin-amd64"
+      sha256 "0a632cc99717953a401bd10760de8fddcee7cf2221b6917f2a35e5ffa4b269b6"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/navikt/copilot/releases/download/nav-pilot/2026.10.11-135202-e0192d2/nav-pilot-linux-arm64"
-      sha256 "61a53d05ef812da687f5e5f0a64c100962c39fb45c313b70e9918afa96e1c758"
+      url "https://github.com/navikt/copilot/releases/download/nav-pilot/2026.10.11-201029-b998fab/nav-pilot-linux-arm64"
+      sha256 "8e4622d922809dd7691998f4662103826f07fbc3ee1009ba352ceec1f2e59ae3"
     else
-      url "https://github.com/navikt/copilot/releases/download/nav-pilot/2026.10.11-135202-e0192d2/nav-pilot-linux-amd64"
-      sha256 "496f60cd0f56ff7d162db8b1df9908c14f96a3f9f6b84c8b5f2f1b74cc1b309e"
+      url "https://github.com/navikt/copilot/releases/download/nav-pilot/2026.10.11-201029-b998fab/nav-pilot-linux-amd64"
+      sha256 "3f02800076096cef43d4ce0efc82cea5f6cb676c3bb190c25ddd576cb4c0e13a"
     end
   end
 
