@@ -1,26 +1,26 @@
 class Cplt < Formula
   desc "Kernel-enforced sandbox wrapper for coding agents"
   homepage "https://github.com/navikt/cplt"
-  version "2026.10.15-054136-ce819af"
+  version "2026.10.15-064814-3fb0c70"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/navikt/cplt/releases/download/2026.10.15-054136-ce819af/cplt-aarch64-apple-darwin.tar.gz"
-      sha256 "d4e6a42d75d34e8a65fbc4df5117f5dc5b9fa24dc72dc8cd9a5e64dfe953aa7c"
+      url "https://github.com/navikt/cplt/releases/download/2026.10.15-064814-3fb0c70/cplt-aarch64-apple-darwin.tar.gz"
+      sha256 "26a75e697d10eeed755497e4a041f4e47295f142e517deca6c5ac542458d50ed"
     else
-      url "https://github.com/navikt/cplt/releases/download/2026.10.15-054136-ce819af/cplt-x86_64-apple-darwin.tar.gz"
-      sha256 "2f5a9e384e7dd3bdad2745123b7b45889c65d5533a98aff2b445224ad879012b"
+      url "https://github.com/navikt/cplt/releases/download/2026.10.15-064814-3fb0c70/cplt-x86_64-apple-darwin.tar.gz"
+      sha256 "848e494a9a7ca9cee662e058e5e967dd51a89214c84d741eb65b7da90bb813ce"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/navikt/cplt/releases/download/2026.10.15-054136-ce819af/cplt-aarch64-unknown-linux-gnu.tar.gz"
-      sha256 "cec9afb0d772d91aece7b5c0c162a1e1e0346ea7d340f3fde613613862b9e21a"
+      url "https://github.com/navikt/cplt/releases/download/2026.10.15-064814-3fb0c70/cplt-aarch64-unknown-linux-gnu.tar.gz"
+      sha256 "1b2a20d9ff7b41a29361f151c99a21ddc83b3c6cd6ef31b91373206bb38a4d29"
     else
-      url "https://github.com/navikt/cplt/releases/download/2026.10.15-054136-ce819af/cplt-x86_64-unknown-linux-gnu.tar.gz"
-      sha256 "3de028ee151f7fd805746967d546cbbe2a6a00d7406b8dea4416db1b9ee182ed"
+      url "https://github.com/navikt/cplt/releases/download/2026.10.15-064814-3fb0c70/cplt-x86_64-unknown-linux-gnu.tar.gz"
+      sha256 "08e5db5ae543d1d0262a9b02824932426b5c30c604b9001815a671439e477ed2"
     end
   end
 
