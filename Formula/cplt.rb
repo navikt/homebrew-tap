@@ -28,6 +28,13 @@ class Cplt < Formula
     bin.install "cplt"
   end
 
+  def caveats
+    <<~EOS
+      No cplt config yet? Run this to get the recommended defaults:
+        cplt config init
+    EOS
+  end
+
   test do
     assert_match "cplt", shell_output("#{bin}/cplt --version")
   end
