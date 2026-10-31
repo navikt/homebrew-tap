@@ -2,8 +2,9 @@ name: Update cplt formula
 
 on:
   schedule:
-    # Check for new releases every hour
-    - cron: "0 * * * *"
+    # Check every 10 minutes, off the top of the hour where scheduled runs
+    # queue longest. A run with no new release exits early (navikt/cplt#941).
+    - cron: "3-59/10 * * * *"
   workflow_dispatch:
 
 concurrency:
