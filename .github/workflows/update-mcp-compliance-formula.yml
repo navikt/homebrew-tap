@@ -1,0 +1,152 @@
+name: Update mcp-compliance formula
+
+on:
+  schedule:
+    - cron: "30 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: formula-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Fetch latest mcp-compliance release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG=$(gh release list --repo navikt/copilot --json tagName --limit 100 \
+            --jq '[.[] | select(.tagName | startswith("cli/mcp-compliance/v"))][0].tagName')
+
+          if [ -z "$TAG" ]; then
+            echo "No mcp-compliance release found"
+            exit 0
+          fi
+
+          VERSION="${TAG#cli/mcp-compliance/}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Latest mcp-compliance release: $VERSION"
+
+      - name: Check if formula is already up to date
+        if: steps.release.outputs.version != ''
+        id: check
+        run: |
+          CURRENT=$(grep '^  version ' Formula/mcp-compliance.rb 2>/dev/null | sed 's/.*"\(.*\)"/\1/' || true)
+          echo "Current: $CURRENT  Latest: ${{ steps.release.outputs.version }}"
+          if [ "$CURRENT" = "${{ steps.release.outputs.version }}" ]; then
+            echo "up_to_date=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "up_to_date=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download checksums
+        if: steps.check.outputs.up_to_date == 'false'
+        id: sums
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          BASE="https://github.com/navikt/copilot/releases/download/${TAG}"
+          curl -fsSL "$BASE/SHA256SUMS" -o SHA256SUMS
+          cat SHA256SUMS
+
+          echo "darwin_arm64=$(grep 'mcp-compliance-darwin-arm64' SHA256SUMS | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "darwin_amd64=$(grep 'mcp-compliance-darwin-amd64' SHA256SUMS | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "linux_arm64=$(grep 'mcp-compliance-linux-arm64' SHA256SUMS | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "linux_amd64=$(grep 'mcp-compliance-linux-amd64' SHA256SUMS | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+
+      - name: Write updated formula
+        if: steps.check.outputs.up_to_date == 'false'
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+          TAG: ${{ steps.release.outputs.tag }}
+          DARWIN_ARM64_SHA: ${{ steps.sums.outputs.darwin_arm64 }}
+          DARWIN_AMD64_SHA: ${{ steps.sums.outputs.darwin_amd64 }}
+          LINUX_ARM64_SHA: ${{ steps.sums.outputs.linux_arm64 }}
+          LINUX_AMD64_SHA: ${{ steps.sums.outputs.linux_amd64 }}
+        run: |
+          cat > Formula/mcp-compliance.rb << FORMULA
+          class McpCompliance < Formula
+            desc "Conformance checks for Nav MCP servers"
+            homepage "https://github.com/navikt/copilot"
+            version "${VERSION}"
+            license "MIT"
+
+            on_macos do
+              if Hardware::CPU.arm?
+                url "https://github.com/navikt/copilot/releases/download/${TAG}/mcp-compliance-darwin-arm64"
+                sha256 "${DARWIN_ARM64_SHA}"
+              else
+                url "https://github.com/navikt/copilot/releases/download/${TAG}/mcp-compliance-darwin-amd64"
+                sha256 "${DARWIN_AMD64_SHA}"
+              end
+            end
+
+            on_linux do
+              if Hardware::CPU.arm?
+                url "https://github.com/navikt/copilot/releases/download/${TAG}/mcp-compliance-linux-arm64"
+                sha256 "${LINUX_ARM64_SHA}"
+              else
+                url "https://github.com/navikt/copilot/releases/download/${TAG}/mcp-compliance-linux-amd64"
+                sha256 "${LINUX_AMD64_SHA}"
+              end
+            end
+
+            def install
+              bin.install Dir["mcp-compliance*"].first => "mcp-compliance"
+            end
+
+            test do
+              assert_match "Usage: mcp-compliance", shell_output("#{bin}/mcp-compliance 2>&1", 2)
+            end
+          end
+          FORMULA
+
+      - name: Commit formula via GitHub API
+        if: steps.check.outputs.up_to_date == 'false'
+        uses: actions/github-script@v9
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = 'Formula/mcp-compliance.rb';
+            const branch = context.ref.replace('refs/heads/', '');
+            const content = fs.readFileSync(path, 'base64');
+            const message = `chore: update mcp-compliance to ${process.env.VERSION}`;
+
+            // The contents API commits as GitHub's web-flow identity, which
+            // signs the commit. Plain `git push` from the runner cannot.
+            for (let attempt = 1; attempt <= 3; attempt++) {
+              const { data: remote } = await github.rest.repos.getContent({
+                ...context.repo,
+                path,
+                ref: branch,
+              });
+              try {
+                await github.rest.repos.createOrUpdateFileContents({
+                  ...context.repo,
+                  path,
+                  branch,
+                  message,
+                  content,
+                  sha: remote.sha,
+                });
+                core.info(message);
+                return;
+              } catch (error) {
+                if (error.status !== 409) throw error;
+                core.warning(
+                  `${path} changed on ${branch} during this run ` +
+                  `(attempt ${attempt}/3), re-reading its sha and retrying`,
+                );
+              }
+            }
+            core.setFailed(`Could not commit ${path} after 3 attempts`);
